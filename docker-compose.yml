@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+  # ─── MongoDB ─────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: sociochain-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Hardhat Local Ethereum Node ────────────────────────
+  hardhat:
+    build:
+      context: ./blockchain
+      dockerfile: Dockerfile.hardhat
+    container_name: sociochain-hardhat
+    restart: unless-stopped
+    ports:
+      - "8545:8545"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─── Backend API ─────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sociochain-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - MONGODB_URI=mongodb://mongodb:27017/sociochain
+      - JWT_SECRET=${JWT_SECRET:-local_dev_jwt_secret}
+      - FRONTEND_URL=http://localhost:5173
+      - RPC_URL=http://hardhat:8545
+      - CHAIN_ID=31337
+      - PINATA_API_KEY=${PINATA_API_KEY:-}
+      - PINATA_SECRET_KEY=${PINATA_SECRET_KEY:-}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      hardhat:
+        condition: service_healthy
+
+  # ─── Frontend ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sociochain-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:4000
+      - VITE_CHAIN_ID=31337
+      - VITE_CONTRACT_SOCIAL=${CONTRACT_ADDRESS_SOCIAL:-0x0000000000000000000000000000000000000000}
+      - VITE_CONTRACT_TOKEN=${CONTRACT_ADDRESS_TOKEN:-0x0000000000000000000000000000000000000000}
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

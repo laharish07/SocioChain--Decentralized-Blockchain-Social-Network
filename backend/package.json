@@ -1,0 +1,29 @@
+{
+  "name": "sociochain-backend",
+  "version": "1.0.0",
+  "description": "SocioChain REST API + WebSocket server",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "jest --forceExit"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "ethers": "^6.11.0",
+    "express": "^4.18.0",
+    "form-data": "^4.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^8.2.0",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.7.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
+    "supertest": "^6.3.0"
+  }
+}
